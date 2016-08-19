@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<title>IM-XMPP报文</title>
+<meta http-equiv="Access-Control-Allow-Origin" content="*">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="/im-console/script/bootstrap/css/bootstrap.min.css"
+	rel="stylesheet">
+<link href="/im-console/script/bootstrap/css/docs.min.css"
+	rel="stylesheet">
+<script type="text/javascript"
+	src="/im-console/script/jquery/jquery.min.js"></script>
+<script type="text/javascript"
+	src="/im-console/script/bootstrap/js/bootstrap.min.js"></script>
+</head>
+<body>
+	<nav class="navbar navbar-default">
+		<div class="container-fluid">
+			<!-- Brand and toggle get grouped for better mobile display -->
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed"
+					data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+					aria-expanded="false">
+					<span class="sr-only">Toggle navigation</span> <span
+						class="icon-bar"></span> <span class="icon-bar"></span> <span
+						class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#">即时通讯-IM-XMPP报文</a>
+			</div>
+
+			<!-- Collect the nav links, forms, and other content for toggling -->
+			<div class="collapse navbar-collapse"
+				id="bs-example-navbar-collapse-1">
+				<ul class="nav navbar-nav">
+					<li><a href="#">基本格式定义</a></li>
+					<li><a href="#">消息回执</a></li>
+					<li><a href="#">聊天内容类型</a></li>
+					<li><a href="#">好友</a></li>
+					<li><a href="#">MUC</a></li>
+					<li><a href="#">在线状态</a></li>
+					<li><a href="#">推送</a></li>
+					<li><a href="#">客服</a></li>
+				</ul>
+				<ul class="nav navbar-nav navbar-right">
+					<li><a href="#">作者：hzong</a></li>
+				</ul>
+			</div>
+			<!-- /.navbar-collapse -->
+		</div>
+		<!-- /.container-fluid -->
+	</nav>
+	<!-- 以下是显示内容 -->
+	<div class="container-fluid">
+		<div class="row-fluid">
+			<!-- 左边导航条-begin -->
+			<div class="col-md-3 list-group">
+				<!-- 目录-begin -->
+
+				<a href="#" class="list-group-item list-group-item-info">基本格式定义</a> 
+					<a href="#" class="list-group-item">id-定义&nbsp;&nbsp;&nbsp;&nbsp;<span class="label label-success">完成</span></a> 
+					<a href="#" class="list-group-item">resource－定义&nbsp;&nbsp;&nbsp;&nbsp;<span class="label label-success">完成</span></a> 
+					<a href="#" class="list-group-item">type-定义&nbsp;&nbsp;&nbsp;&nbsp;<span class="label label-success">完成</span></a>
+					<a href="#" class="list-group-item">错误码-定义&nbsp;&nbsp;&nbsp;&nbsp;<span class="label label-success">完成</span></a>
+					<a href="#" class="list-group-item">命名空间-定义&nbsp;&nbsp;&nbsp;&nbsp;<span class="label label-success">完成</span></a>
+					<a href="#" class="list-group-item">JID-定义&nbsp;&nbsp;&nbsp;&nbsp;<span class="label label-success">完成</span></a>
+					<a href="#" class="list-group-item">BareJID-定义&nbsp;&nbsp;&nbsp;&nbsp;<span class="label label-success">完成</span></a>
+				
+				<a href="#" class="list-group-item list-group-item-info">公共报文</a>	
+					<a href="#" class="list-group-item">心跳包&nbsp;&nbsp;&nbsp;&nbsp; <span class="label label-success">完成</span> </a>
+					<a href="#" class="list-group-item disabled">消息回执&nbsp;&nbsp;&nbsp;&nbsp;<!-- <span class="label label-success">完成</span> --></a>
+					
+				<a href="#" class="list-group-item list-group-item-info">聊天内容类型-定义</a>
+					<a href="#" class="list-group-item">文本&nbsp;&nbsp;&nbsp;&nbsp;<span class="label label-success">完成</span></a>
+					<a href="#" class="list-group-item">图片&nbsp;&nbsp;&nbsp;&nbsp;<!-- <span class="label label-success">完成</span> --></a>
+					<a href="#" class="list-group-item">文件&nbsp;&nbsp;&nbsp;&nbsp;<!-- <span class="label label-success">完成</span> --></a>
+					<a href="#" class="list-group-item">地图&nbsp;&nbsp;&nbsp;&nbsp;<!-- <span class="label label-success">完成</span> --></a>
+					<a href="#" class="list-group-item">播放语音&nbsp;&nbsp;&nbsp;&nbsp;<!-- <span class="label label-success">完成</span> --></a>
+					<a href="#" class="list-group-item">播放视频&nbsp;&nbsp;&nbsp;&nbsp;<!-- <span class="label label-success">完成</span> --></a>
+					<a href="#" class="list-group-item">实时语音&nbsp;&nbsp;&nbsp;&nbsp;<!-- <span class="label label-success">完成</span> --></a>
+					<a href="#" class="list-group-item">实时视频&nbsp;&nbsp;&nbsp;&nbsp;<!-- <span class="label label-success">完成</span> --></a>
+				<a href="#" class="list-group-item list-group-item-info">好友</a>
+					<a href="#" class="list-group-item">单聊</a>
+					<a href="#" class="list-group-item">好友列表</a>
+					<a href="#" class="list-group-item">删除好友</a>
+					<a href="#" class="list-group-item">申请-好友</a>
+					<a href="#" class="list-group-item">申请-好友-同意</a>
+					<a href="#" class="list-group-item">申请-好友-拒绝</a>
+				<a href="#" class="list-group-item list-group-item-info">MUC</a>
+					<a href="#" class="list-group-item">群聊</a>
+					<a href="#" class="list-group-item">获取群聊列表</a>
+					<a href="#" class="list-group-item">获取群成员	列表</a>
+					<a href="#" class="list-group-item">获取群信息</a>
+					<a href="#" class="list-group-item">创建群</a>
+					<a href="#" class="list-group-item">直接-邀请群成员</a>
+					<a href="#" class="list-group-item">间接-邀请群成员</a>
+					<a href="#" class="list-group-item">申请</a>
+					<a href="#" class="list-group-item">申请-同意</a>
+					<a href="#" class="list-group-item">申请-拒绝</a>
+					<a href="#" class="list-group-item">退出</a>
+					<a href="#" class="list-group-item">踢人</a>
+					<a href="#" class="list-group-item">销毁房间</a>
+				<a href="#" class="list-group-item list-group-item-info">在线状态</a>
+				<a href="#" class="list-group-item list-group-item-info">推送消息</a>
+					<a href="#" class="list-group-item">系统消息</a>
+					<a href="#" class="list-group-item">聊天消息</a>
+					<a href="#" class="list-group-item">APNS消息</a>
+				<a class="list-group-item disabled">客服</a>
+				<!-- 目录-end -->
+			</div>
+			<!-- 左边导航条-end -->
+			<!-- 内容-begin -->
+			<div class="col-md-9">
+				<blockquote class="bs-callout bs-callout-info">
+				  <strong>基本格式定义</strong>
+				  <p>公共常用的属性或者标识说明，方便XMPP客户端查阅</p>
+				</blockquote>
+				
+				<!-- ID定义-begin -->
+				<blockquote class="bs-callout ">
+				  <p id="basic_id">id-定义</p>
+				  
+				<div class="panel panel-primary">
+				  <div class="panel-heading">
+			        <h3 class="panel-title">公共常用的属性或者标识说明，方便XMPP客户端查阅</h3>
+			      </div>
+					<div class="panel-body">
+						格式为：用户账号-UUID<br/> 例如：hzong-298d198d-aa60-48af-a9f4-638f8f274afa
+					</div>
+				</div>
+				</blockquote>
+				<!-- ID定义-end -->
+				
+				<!-- resource定义-begin -->
+				<blockquote class="bs-callout ">
+				  <p id="basic_resource">resource－定义</p>
+				<div class="panel panel-primary">
+				  <div class="panel-heading">
+			        <h3 class="panel-title">针对不同资源</h3>
+			      </div>
+					<div class="panel-body">
+						<table class="table table-bordered">
+							<tr>
+								<td>名称</td>
+								<td>标识</td>
+							</tr>
+							<tr>
+								<td>安卓</td>
+								<td rowspan="2" class ="text-center" valign="middle">terminal</td>
+							</tr>
+							<tr>
+								<td>IOS</td>
+							</tr>
+							<tr>
+								<td>PC</td>
+								<td>pc</td>
+							</tr>
+							<tr>
+								<td>web</td>
+								<td>web</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				</blockquote>
+				<!-- resource定义-end -->
+				
+				<!-- type定义-begin -->
+				<blockquote class="bs-callout ">
+				  <p id = "basic_type">type－定义</p>
+				<div class="panel panel-primary">
+				  <div class="panel-heading">
+			        <h3 class="panel-title">根据类型处理不同结果</h3>
+			      </div>
+					<div class="panel-body">
+						<table class="table table-bordered">
+							<tr>
+								<td>类型</td>
+								<td>说明</td>
+							</tr>
+							<tr class="success">
+								<td colspan="2">公共类型</td>
+							</tr>
+							<tr >
+								<td>error</td>
+								<td>错误类型</td>
+							</tr>
+							<tr class="success">
+								<td colspan="2">IQ类型</td>
+							</tr>
+							<tr>
+								<td>get</td>
+								<td>获取</td>
+							</tr>
+							<tr>
+								<td>set</td>
+								<td>设置</td>
+							</tr>
+							<tr>
+								<td>result</td>
+								<td>结果</td>
+							</tr>
+							<tr class="success">
+								<td colspan="2">在线类型</td>
+							</tr>
+							<tr>
+								<td>available</td>
+								<td>可用</td>
+							</tr>
+							<tr>
+								<td>unavailable</td>
+								<td>不可用</td>
+							</tr>
+							<tr>
+								<td>probe</td>
+								<td>用于向接受消息方发送特殊的请求</td>
+							</tr>
+							<tr>
+								<td>subscribe</td>
+								<td>当接受方状态改变时，自动向发送方发送presence信息。</td>
+							</tr>
+							<tr>
+								<td>unsubscribe</td>
+								<td>取消对一个实体的出席信息的订阅</td>
+							</tr>
+							<tr>
+								<td>subscribed</td>
+								<td>订阅</td>
+							</tr>
+							<tr>
+								<td>unsubscribed</td>
+								<td>取消订阅</td>
+							</tr>
+							<tr class="success">
+								<td colspan="2">message类型</td>
+							</tr>
+							<tr id="basic_type_chat">
+								<td>chat</td>
+								<td>单聊</td>
+							</tr>
+							<tr>
+								<td>groupchat</td>
+								<td>群聊</td>
+							</tr>
+							<tr>
+								<td>headline</td>
+								<td>类型的消息用于发送提醒和通知，对是否有反馈没有要求。</td>
+							</tr>
+							<tr>
+								<td>normal</td>
+								<td>normal类型的消息就像邮件消息一样，因为这样的消息都是独立的，可能有反馈，也可能没有；</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				</blockquote>
+				<!-- type定义-end -->
+				
+				
+				<!-- 错误码-定义-begin -->
+				<blockquote class="bs-callout ">
+				  <p id="basic_errorCode">错误码－定义</p>
+				<div class="panel panel-primary">
+				  <div class="panel-heading">
+			        <h3 class="panel-title">根据服务端判断结果的消息类型</h3>
+			      </div>
+					<div class="panel-body">
+						<table class="table table-bordered">
+							<tr>
+								<td>代码</td>
+								<td>错误标识</td>
+								<td>类型</td>
+								<td>描述</td>
+								
+							</tr>
+							<tr>
+								<td colspan="4">
+									<img src="/im-console/api/images/errorCode.png" alt="XMPP错误码" class="img-rounded">
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				</blockquote>
+				<!-- 错误码-定义-end -->
+				
+				<!-- 命名空间-定义-begin -->
+				<blockquote class="bs-callout ">
+				  <p id="basic_xmlns">命名空间－定义</p>
+				<div class="panel panel-primary">
+				  <div class="panel-heading">
+			        <h3 class="panel-title">xmlns:根据消息命名定义</h3>
+			      </div>
+					<div class="panel-body">
+						<table class="table table-bordered">
+							<tr>
+								<td>命名</td>
+								<td>描述</td>
+								
+							</tr>
+							<tr id = "basic_xmlns_jabber:client">
+								<td >
+									jabber:client
+								</td>
+								<td >
+									jabber:客户端
+								</td>
+							</tr>
+							<tr id = "basic_xmlns_urn:xmpp:ping">
+								<td >
+									urn:xmpp:ping
+								</td>
+								<td >
+									客户端请求xmpp心跳包
+								</td>
+							</tr>
+							
+							
+						</table>
+					</div>
+				</div>
+				</blockquote>
+				<!-- 命名空间-定义-end -->
+				
+				<!-- JID-定义-begin -->
+				<blockquote class="bs-callout ">
+				  <p id="basic_jid">JID－定义</p>
+				<div class="panel panel-primary">
+				  <div class="panel-heading">
+			        <h3 class="panel-title">JID:imAccount@domain/<a href="#basic_resource">resource</a></h3>
+			      </div>
+			      <div class="panel-body">
+						例：hzong@free/andorid
+					</div>
+				</div>
+				</blockquote>
+				<!-- JID-定义-end -->
+				
+				<!-- BareJID-定义-begin -->
+				<blockquote class="bs-callout ">
+				  <p id="basic_BareJID">BareJID－定义</p>
+				<div class="panel panel-primary">
+				  <div class="panel-heading">
+			        <h3 class="panel-title">BareJID:imAccount@domain</h3>
+			      </div>
+			      <div class="panel-body">
+						例：hzong@free
+					</div>
+				</div>
+				</blockquote>
+				<!-- BareJID-定义-end -->
+				
+				
+				<!-- -------------------------------------------------------分割线------------------------------------------------------- -->
+				
+				<blockquote class="bs-callout bs-callout-info">
+				  <strong id="common_pck">公共报文</strong>
+				  <p>
+				  	心跳包<br/>
+				  </p>
+				</blockquote>
+				
+				<!-- 心跳包-定义-begin -->
+				<blockquote class="bs-callout ">
+				  <p id="common_pck_heartbeat">心跳包－定义</p>
+				<div class="panel panel-primary">
+				  <div class="panel-heading">
+			        <h3 class="panel-title">客户端每30秒请求服务端一次此包</h3>
+			      </div>
+			      <div class="panel-body">
+			      		<div class = "highlight"> 
+								 <pre > 
+							&lt;iq id='消息id' type="get"  &gt;<br/>
+								&nbsp;&nbsp;&nbsp;&nbsp;&lt;ping xmlns='urn:xmpp:ping'/&gt;<br/>
+							&lt;/iq&gt;<br/>
+								 </pre> 
+						</div>
+						<table class="table table-bordered">
+							<tr>
+								<td>属性</td>
+								<td>类型</td>
+								<td>内容</td>
+							</tr>
+							<tr>
+								<td>id</td>
+								<td>消息id</td>
+								<td><a href="#basic_id">id-定义</a></td>
+							</tr>
+							<tr>
+								<td>type</td>
+								<td>类型定义</td>
+								<td><a href="#basic_type_get">get</a></td>
+							</tr>
+							<tr>
+								<td colspan="2" align="center">ping</td>
+								<td>ping节点</td>
+							</tr>
+							<tr>
+								<td>xmlns</td>
+								<td>命名空间</td>
+								<td><a href="#basic_xmlns_urn:xmpp:ping">urn:xmpp:ping</a></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				</blockquote>
+				<!-- 心跳包-定义-end -->
+				
+				
+				<!-- -------------------------------------------------------分割线------------------------------------------------------- -->
+				
+				<blockquote class="bs-callout bs-callout-info">
+				  <strong id="msg_type">聊天内容类型</strong>
+				  <p>聊天、通知、提醒等的自定义主题内容格式定义<br/>
+				 		<table class="table table-bordered">
+							<tr>
+								<td>字段</td>
+								<td>类型</td>
+								<td>描述</td>
+							</tr>
+							<tr>
+								<td>_msgType</td>
+								<td>数字类型</td>
+								<td>消息类型<br/>
+									文本 ：0<br/>
+									图片 ：1<br/>
+									文件 ：2<br/>
+									地图 ：3<br/>
+									语音 ：4<br/>
+									视频 ：5<br/>
+									实时语音 ：6<br/>
+									实时视频 ：7<br/>
+								</td>
+							</tr>
+							<tr>
+								<td>_body</td>
+								<td>对象、数组等</td>
+								<td>根据消息类型映射不同消息</td>
+							</tr>
+							<tr>
+								<td>_ext</td>
+								<td>对象、数组等</td>
+								<td>自定扩展字段</td>
+							</tr>
+						</table>
+				  
+				  </p>
+				</blockquote>
+				
+				
+				<!-- 文本-定义-begin -->
+				<blockquote class="bs-callout ">
+				  <p id="msg_type_text">文本－定义</p>
+				<div class="panel panel-primary">
+				  <div class="panel-heading">
+			        <h3 class="panel-title">文本聊天内容格式</h3>
+			      </div>
+					<div class="panel-body">
+						
+						<table class="table table-bordered">
+							<tr>
+								<td>字段</td>
+								<td>类型</td>
+								<td>描述</td>
+							</tr>
+							<tr>
+								<td>content</td>
+								<td>string</td>
+								<td>内容</td>
+							</tr>
+						</table>
+						例如：{&quot;_msgType&quot;:0,&quot;_body&quot;:&quot;{\&quot;content\&quot;:\&quot;对的\&quot;}&quot;}
+					</div>
+				</div>
+				</blockquote>
+				<!-- 文本-定义-end -->
+				
+				<!-- -------------------------------------------------------分割线------------------------------------------------------- -->
+				
+				<blockquote class="bs-callout bs-callout-info">
+				  <strong id="friend">好友</strong>
+				  <p>具有聊天、好友列表、添加好友、删除好友 </p>
+				</blockquote>
+				
+				<!-- 文本-定义-begin -->
+				<blockquote class="bs-callout ">
+				  <p>单聊</p>
+				<div class="panel panel-primary">
+				  <div class="panel-heading">
+			        <h3 class="panel-title">一对一聊天</h3>
+			      </div>
+					<div class="panel-body">
+						发送、接受
+						<div class = "highlight"> 
+								 <pre > 
+							&lt;message xmlns='jabber:client' type='chat' to='receiveAcount@domain/resource' from='sendAcount@domain/resource' id='消息id'&gt;<br/>
+								&lt;body&gt;聊天内容类型&lt;/body&gt;<br/>
+								&lt;sendtime&gt;发送时间&lt;/sendtime&gt;<br/>
+							&lt;/message&gt;<br/>
+								 </pre> 
+						</div>
+						<table class="table table-bordered">
+							<tr>
+								<td>属性</td>
+								<td>类型</td>
+								<td>内容</td>
+							</tr>
+							<tr>
+								<td>id</td>
+								<td>消息id</td>
+								<td><a href="#basic_id">id-定义</a></td>
+							</tr>
+							<tr>
+								<td>xmlns</td>
+								<td>命名空间</td>
+								<td><a href="#basic_xmlns_jabber:client" >jabber:client</a></td>
+							</tr>
+							<tr>
+								<td>type</td>
+								<td>类型定义</td>
+								<td><a href="#basic_type_chat">chat</a></td>
+							</tr>
+							<tr>
+								<td>to</td>
+								<td>BareJID定义</td>
+								<td><a href="#basic_BareJID">BareJID</a></td>
+							</tr>
+							<tr>
+								<td>from</td>
+								<td>JID定义</td>
+								<td><a href="#basic_jid">JID</a></td>
+							</tr>
+							<tr>
+								<td>body</td>
+								<td>聊天内容类型</td>
+								<td>请参照【<a href="#msg_type">聊天内容类型</a>】选择合适的</td>
+							</tr>
+							<tr>
+								<td>sendtime</td>
+								<td>yyyy-MM-dd HH:mm:ss</td>
+								<td>发送时间（发送的无需增加，接受的时候需要获取此节点）</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				</blockquote>
+				<!-- 文本-定义-end -->
+				
+			</div>
+			<!-- 内容-end -->
+		</div>
+	</div>
+</body>
+</html>
