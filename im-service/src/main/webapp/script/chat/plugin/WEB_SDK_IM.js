@@ -42,6 +42,7 @@ function IM_IsArray(v){
 	return toString.apply(v) === '[object Array]'; 
 } 
 
+
 (function(){
 	var imurl = "http://192.168.56.1:8888/im-service/";
 	document.write("<script type='text/javascript' src='"+imurl+"script/chat/strophe.js'></script>");
@@ -50,13 +51,10 @@ function IM_IsArray(v){
 //	document.write("<script type='text/javascript' src='"+imurl+"script/chat/plugin/WEB_SDK_IM.js'></script>");
 })();
 
-var m_isDug = false;
+var m_isDug = true;
 
-var IMClient = function(isDug){
-	m_isDug = isDug == undefined ? true : isDug;
-	this.bosh_server = "http://192.168.56.1:5280/";
-	var bsoh_conn = new Strophe.Connection(this.bosh_server);
-	this.bsoh_conn = bsoh_conn;//连接
+var IMClient = function(){
+	this.bsoh_conn = undefined;//连接
 	var imc = this;
 	var im_req = this.im_req = im_dom();
 	var hson = this.hson = im_hson();
@@ -239,7 +237,7 @@ var IMClient = function(isDug){
 				var obj = {};
 				var a_jid = jid.split("_");
 				obj.sys = a_jid[0];
-				obj.owner = a_jid[1];
+				obj.source = a_jid[1];
 				obj.id = a_jid[2];
 				return obj;
 			}
@@ -308,9 +306,46 @@ Date.prototype.format = function (format) {
 /**
  * 初始化操作
  */
-IMClient.prototype.initialize = function(appTag,account,statusEvent){
-	this.onConnect(appTag,account,statusEvent);
+IMClient.prototype.initialize = function(statusEvent){
+	this.onConnect(statusEvent);
 } 
+
+
+/**
+ * 打开连接登录
+ * @param paras 
+ * {
+ * 	account：账号
+ *  password： 密码
+ *  source: 来源
+ * }
+ * 	
+ */
+IMClient.prototype.open = function(paras){
+	var imc = this;
+	
+	var account =paras.account = paras.source+"_"+paras.account;
+	var login_account = account+imc.domin;
+	var wait = 30;
+	
+	IMClient.prototype.domin = "@free";
+	IMClient.prototype.roomdomin = "room.free";
+	IMClient.prototype.resource = '/webim';
+	IMClient.prototype.room = '/room';
+	
+	
+	//登录
+	bsoh_conn.connect(login_account,paras.password,this.status,wait);
+	this.addListen();
+	
+	
+	//新跳包
+	var handler = function(){
+		var xml=  $iq({to: account+imc.domin, type: "get", id: "ping1"}).c("ping", {xmlns: "urn:xmpp:ping"});
+		imc.util.send(xml);//发送XMPP消息
+    };
+	//setTimeout( handler , 1000*5,11); //50秒发一次ping包 ct.sendpingtimer
+}
 
 
 /**
@@ -325,8 +360,9 @@ IMClient.prototype.initialize = function(appTag,account,statusEvent){
  * 
  * }
  */
-IMClient.prototype.onConnect= function(appTag,account,statusEvent){
-	var bsoh_conn = this.bsoh_conn;
+IMClient.prototype.onConnect= function(statusEvent){
+	this.bosh_server = "http://192.168.56.1:5280/";
+	var bsoh_conn =this.bsoh_conn = new Strophe.Connection(this.bosh_server);
 	var imc = this;
 	
 	var datetime = new Date();
@@ -334,7 +370,7 @@ IMClient.prototype.onConnect= function(appTag,account,statusEvent){
 	
 	IMClient.prototype.account = account;//初始化平台账号
 	IMClient.prototype.appTag = appTag;//应用标识
-	var status = function(status){
+	this.status = function(status){
 		if (status == Strophe.Status.CONNECTING) {
 			statusEvent.onConnecting();//连接中事件
 	    } else if (status == Strophe.Status.CONNFAIL) {
@@ -351,19 +387,6 @@ IMClient.prototype.onConnect= function(appTag,account,statusEvent){
 	    }
 	};
 	
-	
-	var handler = function(){
-		var xml=  $iq({to: account+imc.domin, type: "get", id: "ping1"}).c("ping", {xmlns: "urn:xmpp:ping"});
-		imc.util.send(xml);//发送XMPP消息
-    };
-	//setTimeout( handler , 1000*5,11); //50秒发一次ping包 ct.sendpingtimer
-	
-	IMClient.prototype.domin = "@free";
-	IMClient.prototype.roomdomin = "room.free";
-	IMClient.prototype.resource = '/webim';
-	IMClient.prototype.room = '/room';
-	bsoh_conn.connect(account+this.domin,"123",status);
-	this.addListen();
 }
 
 /**
@@ -657,6 +680,9 @@ IMClient.prototype.addListen = function(){
 		
 		cacheOpt.addCacheData(CacheType.rosters, jid, obj);
 		imc.RosterListen.onAgreeRoster(localpart.id);
+		
+		
+		
 	}
 	
 	var refuseRoster=function(xml,msg){//拒绝好友
@@ -967,8 +993,9 @@ IMClient.prototype.refuseRoster = function(imAccount,reason){
 IMClient.prototype.updateRoster = function(imAccount,remark,group){
 	var imc = this;
 	var msgId = this.util.getTimeRndString("updateRoster");//消息ID
-	
 	var jid = imAccount+imc.domin;
+	var is_send = false;
+	
 	
 	var xml =this.util.rootNode(imc.element.iq,msgId,undefined,imc.sessionType.set);
 	var ele_query = xml.c('query').attrs({"xmlns":Strophe.NS.IM_ROSTERS});
@@ -976,10 +1003,15 @@ IMClient.prototype.updateRoster = function(imAccount,remark,group){
 	ele_item.attrs({"jid":jid});
 	if(remark != undefined){
 		ele_item.attrs({"remark":remark});
+		is_send = true;
 	}
-	ele_item.c("group",group);
-	
-	this.util.send(ele_query);//发送XMPP消息
+	if(group != undefined){
+		ele_item.c("group",group);
+		is_send = true;
+	}
+	if(is_send){
+		this.util.send(ele_query);//发送XMPP消息
+	}
 }
 
 
