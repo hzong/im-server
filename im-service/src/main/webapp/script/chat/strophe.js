@@ -780,6 +780,12 @@ Strophe = {
         
         //获取群列表
         MUC_GROUPS :"http://jabber.org/protocol/disco#items",
+        //添加群成员
+        MUC_X_CONFERENCE:"jabber:x:conference",
+        MUC_BASE:"http://jabber.org/protocol/muc",
+        MUC_USER:"http://jabber.org/protocol/muc#user",
+        MUC_ADMIN:"http://jabber.org/protocol/muc#admin",
+        MUC_OWNER:"http://jabber.org/protocol/muc#owner",
         //好友列表
         IM_ROSTERS :"jabber:iq:roster"
     },
