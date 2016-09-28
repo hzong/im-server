@@ -8,6 +8,8 @@ import cn.hzong.im.muc.service.MucService;
 public class MucServiceImpl implements MucService {
 
 	public String getMucInfo() {
+		
+		
 		System.out.println("获取MUC信息成功");
 		return null;
 	}

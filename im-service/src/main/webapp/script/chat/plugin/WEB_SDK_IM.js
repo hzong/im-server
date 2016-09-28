@@ -138,6 +138,21 @@ var IMClient = function(){
 //			groups:3,//群
 //			group_members:4//群成员
 //		};
+	var _error = function(xml){
+		var n_error =  getEle_node(xml,"error");
+		var a_code = getEle_attr(n_error,"code");
+		var obj = {"code":a_code};
+		switch (a_code) {
+		case 1000:
+			obj.message = "已被处理";
+			break;
+
+		default:
+			obj.message="抱歉，此错误还未解析，请联系客服。。。";
+			break;
+		}
+		return obj;
+	} 
 	/**
 	 * 转换父房间
 	 * @param type 0 基本信息 1 详情
@@ -170,7 +185,7 @@ var IMClient = function(){
 		}
 		return obj;
 	}
-	
+	this.is_open = false;
 	this.EeleErrorBuilder = function(obj){
 		
 	}
@@ -201,7 +216,16 @@ var IMClient = function(){
 			send :function(xml){
 				var t = xml.tree();
 				util.toXMPPString(t);
-				imc.bsoh_conn.send(t);
+				if(is_open){
+					imc.bsoh_conn.send(t);
+				}
+			},
+			sendXMPP : function(xml,callback,errback,timeout){
+				var t = xml.tree();
+				util.toXMPPString(t);
+				if(is_open){
+					imc.bsoh_conn.sendXMPP(t,callback,errback,timeout);
+				}
 			},
 			/**
 			 * 针对IQ消息房东
@@ -209,7 +233,9 @@ var IMClient = function(){
 			sendIQ : function(xml,callback,errback,timeout){
 				var t = xml.tree();
 				util.toXMPPString(t);
-				imc.bsoh_conn.sendIQ(t,callback,errback,timeout);
+				if(is_open){
+					imc.bsoh_conn.sendIQ(t,callback,errback,timeout);
+				}
 			},
 			/**
 			 * message顶级节点
@@ -304,8 +330,9 @@ var IMClient = function(){
 	};
 	
 	this.ChatMessageListen = null;//聊天消息监听
-	
-	this.RoomListen = {//群监听
+	this.OnlineStatus = null
+	this.RoomListen = {
+			//群监听
 		/**
 		 * 返回群的简要信息
 		 * @param obj 
@@ -392,14 +419,48 @@ var IMClient = function(){
 		/**
 		 * 解散群
 		 * @param obj
-		 * {
-		 * 	localpartJid : ;//操作人jid
+		  	{
+		  	localpartJid : ;//操作人jid
 			localpart : "";//操作人id
 			roomId :  //群id
 			reason ："" //描述
 			}
 		 */
 		onDestroyRoom:function(obj){
+			
+		},
+		/**
+		 * 接受入群邀请
+		 * @param obj
+		 * {
+							roomId:"",//房间id
+							fromJid:"",//处理人Jid
+							from:""//处理人id
+			}
+		 */
+		onAcceptRoomInvite: function(obj){
+			
+		},
+		/**
+		 * 拒绝入群邀请
+		 * @param obj
+		 * {
+							roomId:"",//房间id
+							fromJid:"",//处理人jid
+							from:""，//处理人id
+							reason："" //描述
+			}
+		 */
+		onRejectRoomInvite: function(obj){
+			
+		},
+		onPassRoomApply : function(obj){
+			
+		},
+		onRejectRoomApply: function(obj){
+			
+		},
+		onApplyRoomInvite:function(obj){
 			
 		}
 		
@@ -496,7 +557,6 @@ var IMClient = function(){
 	 */
 	this.getRoomList=function(cbSuccess,cbError){
 		var msgId = util.getTimeRndString("getGroupList");//消息ID
-		
 		
 		var xml =util.rootNode(imc.element.iq,msgId,imc.roomdomin.substring(1),imc.sessionType.get);
 		xml.c('query').attrs({"xmlns":"http://jabber.org/protocol/disco#items"});
@@ -723,43 +783,80 @@ var IMClient = function(){
 	
 	
 	/**
-	 * 认证方拒绝
+	 * 通过入群申请
 	 * @param roomId 群id 必填
+	 * @param id  申请的id
 	 * @param localpartJid 接收方jid 必填
-	 * @param reason 描述
 	 */
-	this.declineRoomInvite = function(obj){
-		var msgId = util.getTimeRndString("declineRoomInvite");//消息ID
+	this.passRoomApply = function(obj){
+		var msgId = util.getTimeRndString("acceptRoomInvite");//消息ID
 		var jid = obj.roomId+imc.roomdomin;
 		
 		var xml =util.rootNode(imc.element.message,msgId,jid);
-		var x = xml.c("x",{xmlns:Strophe.NS.MUC_USER}	);
-		var agree = x.c("decline",{"to":obj.localpartJid+imc.domin});
-		if(!IM_isUndefined(obj.reason)){
-			agree.c("reason",obj.reason);
-		}
+		var x = xml.c("x",{xmlns:Strophe.NS.MUC_ADMIN}	);
+		var agree = x.c("agree",{"apply_id":obj.id, "to":obj.localpartJid+imc.domin});
 		util.send(xml);
 	}
 	/**
-	 * 认证方同意
+	 * 拒绝入群申请
 	 * @param roomId 群id 必填
+	 * @param id  申请的id
 	 * @param localpartJid 接收方jid 
+	 * @param reason 描述
 	 */
-	this.agreeRoomInvite = function(obj){
-		var msgId = util.getTimeRndString("agreeRoomInvite");//消息ID
+	this.rejectRoomApply = function(obj){
+		var msgId = util.getTimeRndString("rejectRoomInvite");//消息ID
+		var jid = obj.roomId+imc.roomdomin;
+		
+		var xml =util.rootNode(imc.element.message,msgId,jid);
+		var x = xml.c("x",{xmlns:Strophe.NS.MUC_ADMIN}	);
+		var decline = x.c("decline",{"apply_id":obj.id,"to":obj.localpartJid+imc.domin});
+		if(!IM_isUndefined(obj.reason)){
+			decline.c("reason",obj.reason);
+		}
+		util.sendXMPP(xml,undefined,function(xml){
+			imc.RoomListen.onRejectRoomApply(_error(xml),obj);
+		});
+	}
+	
+	/**
+	 * 接受入群邀请
+	 * @param roomId 群id 必填
+	 * @param localpartJid 接收方jid 必填
+	 */
+	this.acceptRoomInvite = function(obj){
+		var msgId = util.getTimeRndString("acceptRoomInvite");//消息ID
 		var jid = obj.roomId+imc.roomdomin;
 		
 		var xml =util.rootNode(imc.element.message,msgId,jid);
 		var x = xml.c("x",{xmlns:Strophe.NS.MUC_USER}	);
-		var invite = x.c("agree",{"to":obj.localpartJid+imc.domin});
+		var agree = x.c("agree",{"to":obj.localpartJid+imc.domin});
+		
+		util.send(xml);
+	}
+	/**
+	 * 拒绝入群邀请
+	 * @param roomId 群id 必填
+	 * @param localpartJid 接收方jid 
+	 */
+	this.rejectRoomInvite = function(obj){
+		var msgId = util.getTimeRndString("rejectRoomInvite");//消息ID
+		var jid = obj.roomId+imc.roomdomin;
+		
+		var xml =util.rootNode(imc.element.message,msgId,jid);
+		var x = xml.c("x",{xmlns:Strophe.NS.MUC_USER}	);
+		var invite = x.c("decline",{"to":obj.localpartJid+imc.domin});
+		if(!IM_isUndefined(obj.reason)){
+			invite.c("reason",obj.reason);
+		}
 		util.send(xml);
 	}
 	
 	/**
 	 * 认证方申请
-	 * @param roomId 群id 必填
-	 * @param localpartJid 接收方jid 必填
-	 * @param reason 描述
+	 * @param obj
+	 * roomId 群id 必填
+	 * reason 描述
 	 */
 	this.applyRoomInvite = function(obj){
 		var msgId = util.getTimeRndString("applyRoomInvite");//消息ID
@@ -768,6 +865,9 @@ var IMClient = function(){
 		var xml =util.rootNode(imc.element.message,msgId,jid);
 		var x = xml.c("x",{xmlns:Strophe.NS.MUC_USER}	);
 		var apply = x.c("apply");
+		if(!IM_isUndefined(obj.reason)){
+			apply.c("reason",obj.reason);
+		}
 		util.send(xml);
 	}
 	
@@ -910,16 +1010,24 @@ var IMClient = function(){
 		 * 获取XML节点
 		 */
 		var getEle_node = function(xml,node){
-			return xml.getElementsByTagName(node);//消息规则定义/chat/groupchat/....
+			var ele_node = xml;
+			if(xml.length != undefined){
+				ele_node = xml[0];
+			}
+			var xml_node = ele_node.getElementsByTagName(node);
+			if(xml_node.length > 0){
+				return xml_node[0];
+			}
+			return undefined;//消息规则定义/chat/groupchat/....
 		};
 		
 		/**
 		 * 获取元素属性
 		 */
 		var getEle_attr = function(xml,node,attr){
-			var node = getEle_node(xml,node);
-			if(node.length > 0){
-				return node[0].getAttribute(attr);
+			var xml_node = getEle_node(xml,node);
+			if(xml_node != undefined){
+				return xml_node.getAttribute(attr);
 			}
 			return undefined;
 		};
@@ -1302,6 +1410,28 @@ var IMClient = function(){
 			imc.RoomListen.onDestroyRoom(obj);
 		}
 		
+		var o_user_onlineStatus = {};
+		var onlineStatus = function(xml,msg){
+			var obj = {};
+			obj.fromJid = Strophe.getNodeFromJid(msg.from);
+			obj.from = util.getLocalpart(obj.fromJid);
+			
+			
+			
+			var res = Strophe.getResourceFromJid(msg.from);//资源
+			if(msg.type == undefined || msg.type == null){
+				obj.type = "online";
+				o_user_onlineStatus[obj.fromJid] = res; 
+			}else{
+				if(o_user_onlineStatus[obj.fromJid] != res){
+					return;
+				}
+				obj.type = "offline";
+			}
+			imc.OnlineStatus(obj);
+		}
+		
+		var res = undefined;
 		
 		var listens = {
 			onMessage:function(xml){
@@ -1309,6 +1439,7 @@ var IMClient = function(){
 				
 				
 				var msg = new XMPP_XML(xml);
+				var e_x =  getEle_node(xml,"x");
 				var xmlns = getEle_attr(xml,"x","xmlns");
 				//针对群操作处理
 				if(xmlns == Strophe.NS.MUC_X_CONFERENCE){
@@ -1337,12 +1468,56 @@ var IMClient = function(){
 					return;
 				}else if(xmlns == Strophe.NS.MUC_USER){
 					var obj = {};
-					obj.roomId = Strophe.getNodeFromJid(msg.from);
-					obj.fromJid = Strophe.getNodeFromJid(im_req(xml).find("x invite").attr("from"));
-					obj.from = util.getLocalpart(obj.fromJid);
-					obj.reason = im_req(xml).find("x invite reason").html();
-					imc.RoomListen.onMediatedInvitation(obj);
+					var invite = "invite";
+					var decline = "decline";
+					var agree = "agree";
+					var apply = "apply";
+					var tagName =(im_req(e_x).children(":first")[0] || {}).tagName;
+						if(tagName == invite){//邀请
+							obj.roomId = Strophe.getNodeFromJid(msg.from);
+							obj.fromJid = Strophe.getNodeFromJid(im_req(xml).find("x "+invite).attr("from"));
+							obj.from = util.getLocalpart(obj.fromJid);
+							obj.reason = im_req(xml).find("x "+invite+" reason").html();
+							imc.RoomListen.onMediatedInvitation(obj);
+						}else if(tagName == decline){
+							obj.roomId = Strophe.getNodeFromJid(msg.from);
+							obj.fromJid = Strophe.getNodeFromJid(im_req(xml).find("x "+decline).attr("from"));
+							obj.from = util.getLocalpart(obj.fromJid);
+							obj.reason = im_req(xml).find("x "+decline+" reason").html();
+							imc.RoomListen.onRejectRoomInvite(obj);
+						}else if(tagName == agree){
+							obj.roomId = Strophe.getNodeFromJid(msg.from);
+							obj.fromJid = Strophe.getNodeFromJid(im_req(xml).find("x "+agree).attr("from"));
+							obj.from = util.getLocalpart(obj.fromJid);
+							imc.RoomListen.onAcceptRoomInvite(obj);
+						}else if(tagName == apply){
+							obj.id = msg.id;
+							obj.roomId = Strophe.getNodeFromJid(msg.from);
+							obj.fromJid = Strophe.getNodeFromJid(im_req(xml).find("x "+apply).attr("from"));
+							obj.from = util.getLocalpart(obj.fromJid);
+							obj.reason = im_req(xml).find("x "+apply+" reason").html();
+							imc.RoomListen.onApplyRoomInvite(obj);
+						}
 					
+					return;
+				}else if(xmlns == Strophe.NS.MUC_ADMIN){
+					var obj = {};
+					var decline = "decline";
+					var agree = "agree";
+					var tagName =(im_req(e_x).children(":first")[0] || {}).tagName;
+					if(tagName == decline){
+						obj.roomId = Strophe.getNodeFromJid(msg.from);
+						obj.fromJid = Strophe.getNodeFromJid(im_req(xml).find("x "+decline).attr("from"));
+						obj.from = util.getLocalpart(obj.fromJid);
+						obj.reason = im_req(xml).find("x "+decline+" reason").html();
+						imc.RoomListen.onRejectRoomApply(res,obj);
+					}else if(tagName == agree){
+						obj.roomId = Strophe.getNodeFromJid(msg.from);
+						obj.fromJid = Strophe.getNodeFromJid(im_req(xml).find("x "+agree).attr("from"));
+						obj.from = util.getLocalpart(obj.fromJid);
+						imc.RoomListen.onPassRoomApply(res,obj);
+					}
+					return;
 				}
 				
 				if(msg.type == imc.sessionType.chat || msg.type == imc.sessionType.groupchat){//单聊、群聊
@@ -1382,16 +1557,20 @@ var IMClient = function(){
 				}else if(presence.type == undefined ){
 					if(getEle_attr(xml,"x","xmlns") == Strophe.NS.MUC_BASE){//创建群
 						createRoom(xml,presence);
+					}else{
+						onlineStatus(xml,presence);
 					}
 				}else if(imc.sessionType.unavailable == presence.type){//退群
 					var xmlns = getEle_attr(xml,"x","xmlns");
-					var status = getEle_attr(xml,"x","status");
-					if(xmlns== Strophe.NS.MUC_USER && status == 110){//退群
+					var code = getEle_attr(xml,"x","code");
+					if(xmlns== Strophe.NS.MUC_USER && code == 110){//退群
 						exitRoom(xml,presence);
-					}else if(xmlns== Strophe.NS.MUC_USER && status == 307){//退群
+					}else if(xmlns== Strophe.NS.MUC_USER && code == 307){//退群
 						removeRoomMembers(xml,presence);
 					}else if(xmlns== Strophe.NS.MUC_USER){
 						destroyRoom(xml,presence);
+					}else{
+						onlineStatus(xml,presence);
 					}
 				}
 				
@@ -1483,9 +1662,12 @@ var IMClient = function(){
 		var login_account = account+imc.domin;
 		var wait = 30;
 		
+	
 		
 		//登录
 		imc.bsoh_conn.connect(login_account,paras.password,this.status,wait);
+		
+		
 //		imc.addListen();
 		//message报文
 		imc.bsoh_conn.addHandler(onListens,null,null,null,null,null);
@@ -1548,24 +1730,16 @@ IMClient.prototype.initialize = function(statusEvent){
 	this.status = function(status){
 		if (status == Strophe.Status.CONNECTING) {
 			statusEvent.onConnecting();//连接中事件
-	    } else if (status == Strophe.Status.CONNFAIL) {
-	    	statusEvent.onDisconnected();//断开连接事件
-	    } else if (status == Strophe.Status.DISCONNECTING) {
-	    	statusEvent.onConnecting();//连接中事件
 	    } else if (status == Strophe.Status.DISCONNECTED) {
 	    	statusEvent.onDisconnected();//断开连接事件
-//	    	IM_log(datetime.getTime()-oldtime);
+	    	is_open = false;
 	    } else if (status == Strophe.Status.CONNECTED) {
+	    	is_open = true;	
 	    	statusEvent.onConnected();//连接成功
 	    	bsoh_conn.send($pres().tree());
-//	    	oldtime = datetime.getTime();
 	    }
 	};
 } 
-
-
-
-
 
 
 

@@ -2724,6 +2724,83 @@ Strophe.Connection.prototype = {
         this.send(elem);
         return id;
     },
+    
+    sendXMPP: function(elem, callback, errback, timeout) {
+        var timeoutHandler = null;
+        var that = this;
+        var tagName = elem.tagName;
+        var xmppType = elem.getAttribute('type'); 
+        
+        if (typeof(elem.tree) === "function") {
+            elem = elem.tree();
+        }
+        var id = elem.getAttribute('id');
+
+        // inject id if not found
+        if (!id) {
+            id = this.getUniqueId("send"+tagName);
+            elem.setAttribute("id", id);
+        }
+
+        var expectedFrom = elem.getAttribute("to");
+        var fulljid = this.jid;
+
+        var handler = this.addHandler(function (stanza) {
+            // remove timeout handler if there is one
+            if (timeoutHandler) {
+                that.deleteTimedHandler(timeoutHandler);
+            }
+
+            var acceptable = false;
+            var from = stanza.getAttribute("from");
+            if (from === expectedFrom ||
+               (expectedFrom === null &&
+                   (from === Strophe.getBareJidFromJid(fulljid) ||
+                    from === Strophe.getDomainFromJid(fulljid) ||
+                    from === fulljid))) {
+                acceptable = true;
+            }
+
+            if (!acceptable) {
+                throw {
+                    name: "StropheError",
+                    message: "Got answer to "+tagName+" from wrong jid:" + from +
+                             "\nExpected jid: " + expectedFrom
+                };
+            }
+
+            var iqtype = stanza.getAttribute('type');
+            if (iqtype == xmppType) {
+                if (callback) {
+                    callback(stanza);
+                }
+            } else if (iqtype == 'error') {
+                if (errback) {
+                    errback(stanza);
+                }
+            } else {
+                throw {
+                    name: "StropheError",
+                    message: "Got bad "+tagName+" type of " + xmppType
+                };
+            }
+        }, null, tagName, ['error', xmppType], id);
+
+        // if timeout specified, setup timeout handler.
+        if (timeout) {
+            timeoutHandler = this.addTimedHandler(timeout, function () {
+                // get rid of normal handler
+                that.deleteHandler(handler);
+                // call errback on timeout with null stanza
+                if (errback) {
+                    errback(null);
+                }
+                return false;
+            });
+        }
+        this.send(elem);
+        return id;
+    },
 
     /** PrivateFunction: _queueData
      *  Queue outgoing data for later sending.  Also ensures that the data
@@ -4813,7 +4890,8 @@ Strophe.Bosh.prototype = {
                         }
                     }
                 }
-                req.xhr.send(req.data);
+                	req.xhr.send(req.data);
+                
             };
 
             // Implement progressive backoff for reconnects --
